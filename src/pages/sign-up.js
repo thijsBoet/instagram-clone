@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import FirebaseContext from '../context/firebase';
+import { doesUsernameExist } from '../services/firebase';
 import * as ROUTES from '../constants/routes';
 
 export default function SignUp() {
@@ -18,9 +19,37 @@ export default function SignUp() {
 	const handleSignUp = async event => {
 		event.preventDefault();
 
-		try {
-		
-		} catch (error) {}
+		const usernameExists = await doesUsernameExist(username);
+		if (!usernameExists.length) {
+			try {
+				const createdUserResult = await firebase
+					.auth()
+					.createUserWithEmailAndPassword(emailAddress, password);
+				
+				await createdUserResult.user.updateProfile({
+					displayName: username
+				})
+
+				await firebase.firestore().collection('users').add({
+					userId: createdUserResult.user.uid,
+					username: username.toLocaleLowerCase(),
+					fullname,
+					emailAddress: emailAddress.toLocaleLowerCase(),
+					following: [],
+					dateCreated: Date.now(),
+				})
+
+				history.push(ROUTES.DASHBOARD)
+			} catch (error) {
+				setFullname('');
+				setEmailAddress('');
+				setPassword('');
+				setError(error.message);
+			}
+		} else {
+			setError('This username is already taken, please try another.')
+		}
+
 	};
 
 	useEffect(() => {
@@ -54,7 +83,7 @@ export default function SignUp() {
 							placeholder='Username'
 							className='text-sm text-gray-base w-full mr-3 py-5 px-4 h-2 border border-gray-primary rounded mb-2'
 							onChange={({ target }) => setUsername(target.value)}
-							value={username || ""}
+							value={username || ''}
 						/>
 						<input
 							aria-label='Enter your fullname'
@@ -62,7 +91,7 @@ export default function SignUp() {
 							placeholder='Full Name'
 							className='text-sm text-gray-base w-full mr-3 py-5 px-4 h-2 border border-gray-primary rounded mb-2'
 							onChange={({ target }) => setFullname(target.value)}
-							value={fullname || ""}
+							value={fullname || ''}
 						/>
 						<input
 							aria-label='Enter your email address'
@@ -70,7 +99,7 @@ export default function SignUp() {
 							placeholder='Email address'
 							className='text-sm text-gray-base w-full mr-3 py-5 px-4 h-2 border border-gray-primary rounded mb-2'
 							onChange={({ target }) => setEmailAddress(target.value)}
-							value={emailAddress || ""}
+							value={emailAddress || ''}
 						/>
 						<input
 							aria-label='Enter your password'
@@ -81,7 +110,7 @@ export default function SignUp() {
 							value={password}
 						/>
 						<button
-							disabled={isInvalid || ""}
+							disabled={isInvalid || ''}
 							type='submit'
 							className={`bg-blue-medium text-white w-full rounded h-8 font-bold
             				${isInvalid && 'opacity-50'}`}
