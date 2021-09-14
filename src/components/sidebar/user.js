@@ -1,9 +1,8 @@
-import React, { memo } from 'react';
 import propTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 
-const User = ({ username, fullName }) => {
+export default function User ({ username, fullName }) {
 	return !username || !fullName ? (
 		<Skeleton count={1} height={61} />
 	) : (
@@ -24,7 +23,7 @@ const User = ({ username, fullName }) => {
 			</div>
 		</Link>
 	);
-}
+};
 
 User.propTypes = {
 	username: propTypes.string,
@@ -32,5 +31,3 @@ User.propTypes = {
 };
 
 // User.whyDidYouRender = true;
-
-export default memo(User);
